@@ -1,0 +1,5 @@
+.DS_Store
+*.blend1
+__pycache__/
+# 영상은 index.html 안에 base64 로 들어 있음 (원본만 로컬 보관)
+keepawake.mp4
