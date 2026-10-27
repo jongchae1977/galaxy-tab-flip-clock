@@ -152,11 +152,20 @@
   #wx .wxin .desc { position: absolute; left: 0; width: 100%; top: 822px; font-size: 84px; color: #d8d5cc; white-space: nowrap; }
   #wx .wxin .rule { position: absolute; left: 9%; width: 82%; top: 935px; height: 3.5px; background: #4a4945; }
   /* 아래 칸: 작은 글자 줄 대신 왼쪽 습도 숫자, 오른쪽 미세먼지 얼굴 아이콘 두 칸 (2026-10-26) */
-  #wx .wxin .big { position: absolute; top: 960px; width: 50%; height: 260px; line-height: 260px; white-space: nowrap; }
-  #wx .wxin .hum { left: 0; font-size: 112px; font-weight: bold; color: #eeebe2; }
-  #wx .wxin .hum svg { width: 0.42em; height: 0.56em; vertical-align: 0; margin-right: 0.12em; }
-  #wx .wxin .dust { left: 50%; font-size: 200px; color: #6d6b65; }
-  #wx .wxin .dust svg { vertical-align: middle; margin: 0; }
+  /* 아래 칸: 아이폰 날씨 카드처럼 작은 제목 + 큰 값. 미세먼지는 등급 글자 + 색 막대 위 위치 점 + 수치 */
+  #wx .wxin .big { position: absolute; top: 965px; width: 50%; height: 250px; white-space: nowrap; }
+  #wx .wxin .hum { left: 0; }
+  #wx .wxin .dust { left: 50%; }
+  #wx .wxin .big .lbl { font-size: 29px; line-height: 40px; color: #8f8c84; font-weight: bold; letter-spacing: 0.04em; }
+  #wx .wxin .big .lbl svg { width: 0.7em; height: 0.9em; margin-right: 0.2em; vertical-align: -0.1em; }
+  #wx .wxin .hum .val { font-size: 120px; line-height: 170px; font-weight: bold; color: #eeebe2; }
+  #wx .wxin .dust .val { font-size: 84px; line-height: 112px; font-weight: bold; }
+  #wx .wxin .dust .bar { position: relative; margin: 6px auto 0; width: 250px; height: 14px; border-radius: 7px;
+    background: -webkit-linear-gradient(left, #4d8fe0 10%, #3fae55 37%, #f0a028 63%, #e5484d 90%);
+    background: linear-gradient(to right, #4d8fe0 10%, #3fae55 37%, #f0a028 63%, #e5484d 90%); }
+  #wx .wxin .dust .bar i { position: absolute; top: -7px; width: 28px; height: 28px; margin-left: -14px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 0 4px #151514, 0 1px 4px rgba(0,0,0,0.6); }
+  #wx .wxin .dust .sub { font-size: 25px; line-height: 34px; margin-top: 14px; color: #8f8c84; }
   #wx .wxin .vrule { position: absolute; left: 50%; top: 985px; width: 3.5px; height: 210px; margin-left: -1.75px; background: #4a4945; }
   #wx .wxin .stat { position: absolute; left: 0; width: 100%; top: 20px; font-size: 26px; color: #6d6b65; white-space: nowrap; }
   #wx.stale .wxin .desc, .flap.wstale { opacity: 0.55; }
@@ -788,7 +797,7 @@
     wx.className = stale ? "stale" : ""; WT.root.className = "flap" + (stale ? " wstale" : "");
     if (!d) {
       WT.flipTo(["--°C"], [], 300); wq(".desc").textContent = "";
-      wq(".hum").innerHTML = DROP + "--";
+      wq(".hum").innerHTML = '<div class="lbl">' + DROP + '습도</div><div class="val">--</div>';
       drawDust();
       wq(".stat").textContent = wxErr ? "날씨 연결 안 됨" : "날씨 불러오는 중";
       wxIcon("none", true); drawHours(null); return;
@@ -798,7 +807,7 @@
     WT.flipTo([tv + "°C"], tempSteps(WT.value, tv), 300);
     // 날씨 설명 자리에 최저(파랑) / 최고(빨강) 기온 숫자만 (설명은 아이콘이 대신함)
     wq(".desc").innerHTML = '<b style="color:#7fb6e6">' + rnd(d.lo) + '°</b> / <b style="color:#e98a7a">' + rnd(d.hi) + '°</b>';
-    wq(".hum").innerHTML = DROP + Math.round(d.hum) + "%";
+    wq(".hum").innerHTML = '<div class="lbl">' + DROP + '습도</div><div class="val">' + Math.round(d.hum) + "%</div>";
     drawDust();
     var t = new Date(d.t);
     wq(".stat").textContent = wxErr || stale ? "연결 안 됨 · " + ("0" + t.getHours()).slice(-2) + ":" + ("0" + t.getMinutes()).slice(-2) + " 기준" : "";   // 평소엔 숨김
@@ -814,17 +823,17 @@
     function g(v, a, b, c) { return v <= a ? 0 : v <= b ? 1 : v <= c ? 2 : 3; }
     return Math.max(g(pm10, 30, 80, 150), g(pm25, 15, 35, 75));
   }
-  function dustFace(i) {
-    var d = DUST[i];
-    return '<svg width="1.05em" height="1.05em" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="' + d[1] + '"/>' +
-      '<circle cx="8.5" cy="9.5" r="1.4" fill="#151514"/><circle cx="15.5" cy="9.5" r="1.4" fill="#151514"/>' +
-      '<path d="' + d[2] + '" stroke="#151514" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
-  }
   function drawDust() {
     var city = CITIES[cfg.city % CITIES.length], a = airdata && airdata.city === city[0] && Date.now() - airdata.t < 3 * 3600 * 1000 ? airdata : null;
-    if (!a || a.pm10 == null) { wq(".dust").textContent = "--"; return; }
+    if (!a || a.pm10 == null) { wq(".dust").innerHTML = '<div class="lbl">미세먼지</div><div class="val" style="color:#6d6b65">--</div>'; return; }
     var i = dustGrade(a.pm10, a.pm25 == null ? 0 : a.pm25);
-    wq(".dust").innerHTML = dustFace(i);
+    // 막대 위 점: 등급마다 1/4 칸, 칸 안에서는 기준값 사이 비율 (PM10·PM2.5 중 더 나쁜 쪽)
+    function pos(v, t) { for (var g = 0; g < 4; g++) if (v <= t[g + 1] || g === 3) return (g + Math.max(0, Math.min(1, (v - t[g]) / (t[g + 1] - t[g])))) / 4; }
+    var x = Math.max(pos(a.pm10, [0, 30, 80, 150, 250]), a.pm25 == null ? 0 : pos(a.pm25, [0, 15, 35, 75, 125]));
+    var COL = ["#5aa0f0", "#4cc265", "#f5a83a", "#f0565b"];
+    wq(".dust").innerHTML = '<div class="lbl">미세먼지</div><div class="val" style="color:' + COL[i] + '">' + DUST[i][0] + "</div>" +
+      '<div class="bar"><i style="left:' + (4 + x * 92).toFixed(1) + '%"></i></div>' +
+      '<div class="sub">PM2.5 ' + (a.pm25 == null ? "-" : Math.round(a.pm25)) + " · PM10 " + Math.round(a.pm10) + "</div>";
   }
   function fetchAir(scheme) {
     var city = CITIES[cfg.city % CITIES.length];
