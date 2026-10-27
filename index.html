@@ -139,6 +139,15 @@
   #wx .wxin svg { vertical-align: -0.12em; margin-right: 0.25em; }
   /* 위 창 전체가 아이폰 날씨처럼 움직이는 하늘 (wxSky). 지역 이름은 그 위에 그림자를 두고 */
   #wx .wxin canvas { position: absolute; left: 0; top: 0; width: 690px; height: 400px; }
+  /* 시간별 예보 줄 (하늘 창 아래 14 mm): 지금 + 3시간 간격 4칸. 칸 폭 13.8 mm 라 그림은 SVG, 글자는 굵게+그림자 */
+  #wx .wxin .hrs { position: absolute; left: 0; top: 262px; width: 690px; height: 138px; display: -webkit-flex; display: flex;
+                   background: rgba(0,0,0,0.34); border-top: 2px solid rgba(255,255,255,0.12); }
+  #wx .wxin .hr { -webkit-flex: 1; flex: 1; text-align: center; color: #f2efe8; text-shadow: 0 1px 3px rgba(0,0,0,0.8); white-space: nowrap; }
+  #wx .wxin .hr .tm { font-size: 25px; line-height: 30px; margin-top: 5px; color: #d3d0c8; }
+  #wx .wxin .hr.now .tm { color: #fff; font-weight: bold; }
+  #wx .wxin .hr svg { display: block; width: 58px; height: 58px; margin: 0 auto; vertical-align: 0; }
+  #wx .wxin .hr .tp { font-size: 34px; line-height: 42px; font-weight: bold; }
+  #wx .wxin .hr .pp { font-size: 24px; color: #8cc8ff; margin-left: 5px; }
   #wx .wxin .loc { text-shadow: 0 0 14px rgba(0,0,0,0.75), 0 2px 4px rgba(0,0,0,0.6); }
   #wx .wxin .desc { position: absolute; left: 0; width: 100%; top: 822px; font-size: 84px; color: #d8d5cc; white-space: nowrap; }
   #wx .wxin .rule { position: absolute; left: 9%; width: 82%; top: 935px; height: 3.5px; background: #4a4945; }
@@ -548,7 +557,7 @@
   var PIN = '<svg width="0.8em" height="1em" viewBox="0 0 12 16"><path d="M6 0C2.7 0 0 2.6 0 5.9 0 10.3 6 16 6 16s6-5.7 6-10.1C12 2.6 9.3 0 6 0zm0 8.4A2.5 2.5 0 1 1 6 3.4a2.5 2.5 0 0 1 0 5z" fill="#eeebe2"/></svg>';
   var DROP = '<svg width="0.75em" height="1em" viewBox="0 0 12 16"><path d="M6 0S0 7 0 10.4A6 6 0 0 0 12 10.4C12 7 6 0 6 0z" fill="#4aa3df"/></svg>';
   wx.innerHTML = '<div class="wxin' + (ZOOM ? '' : ' tf') + '" style="width:' + ww.w * 10 + 'px;height:' + ww.h * 10 + 'px">' +
-    '<canvas></canvas><div class="loc"></div><div class="desc"></div><div class="rule"></div>' +
+    '<canvas></canvas><div class="hrs"></div><div class="loc"></div><div class="desc"></div><div class="rule"></div>' +
     '<div class="big hum"></div><div class="vrule"></div><div class="big dust"></div>' +
     '<div class="stat"></div>' +
     '<div class="vshadow" style="height:' + (W.wtop.h * 2.2) + 'px"></div>' +
@@ -609,7 +618,7 @@
     var sp = { puff: [puff(cloudCol, Math.round(u * 1.1)), puff(cloudCol, Math.round(u * 0.8))] };
     // 달: 오늘 실제 위상 (2000-01-06 18:14 UTC 삭, 29.53일 주기). 어두운 쪽도 희미하게 보임 (지구조)
     var ph = ((Date.now() - Date.UTC(2000, 0, 6, 18, 14)) / 86400000 / 29.530588) % 1;
-    sp.moon = sprite(Math.round(u * 1.3), Math.round(u * 1.3), function (g, a) {
+    sp.moon = sprite(Math.round(u * 1.1), Math.round(u * 1.1), function (g, a) {
       var r = a * 0.19, c = a / 2;
       var gl = g.createRadialGradient(c, c, r * 0.9, c, c, a / 2); gl.addColorStop(0, "rgba(255,240,205," + (0.12 + 0.3 * Math.sin(Math.PI * ph)) + ")"); gl.addColorStop(1, "rgba(255,240,205,0)");
       g.fillStyle = gl; g.fillRect(0, 0, a, a);
@@ -676,7 +685,7 @@
       }
     }
     // 해 / 달
-    var bx = W2 * 0.78, by = H2 * 0.5;   // 해·달은 크게 (창 높이의 절반 가까이)
+    var bx = W2 * 0.78, by = H2 * 0.4;   // 해·달은 크게. 아래 35% 는 시간별 예보 줄이라 조금 위로
     if ((k === "sun" || k === "part") && day) {
       var pulse = 1 + 0.04 * Math.sin(t * 1.3);
       var gl = g.createRadialGradient(bx, by, u * 0.12, bx, by, u * 0.95 * pulse);
@@ -685,7 +694,7 @@
       g.save(); g.translate(bx, by); g.rotate(t * 0.06); g.fillStyle = "rgba(255,240,190,0.07)";
       for (i = 0; i < 12; i++) { g.rotate(Math.PI / 6); g.beginPath(); g.moveTo(0, 0); g.lineTo(u * 1.2, -u * 0.08); g.lineTo(u * 1.2, u * 0.08); g.closePath(); g.fill(); }
       g.restore();
-      g.beginPath(); g.arc(bx, by, u * 0.22, 0, Math.PI * 2); g.fillStyle = "#fff6d8"; g.fill();
+      g.beginPath(); g.arc(bx, by, u * 0.2, 0, Math.PI * 2); g.fillStyle = "#fff6d8"; g.fill();
     } else if ((k === "sun" || k === "part") && !day) g.drawImage(sp.moon, bx - sp.moon.width / 2, by - sp.moon.height / 2);
     // 구름: 오른쪽으로 천천히 흐르고 끝나면 왼쪽에서 다시
     for (i = 0; i < it.clouds.length; i++) {
@@ -737,6 +746,39 @@
     }
     setTimeout(skyFrame, Math.max(10, 50 - (Date.now() - now)));   // 초당 20장
   }
+  // 시간별 예보 칸의 작은 날씨 그림 (24×24)
+  var CLOUD_D = "M6.6 19h10.6a4.1 4.1 0 0 0 .5-8.17A5.6 5.6 0 0 0 7 11.6a3.7 3.7 0 0 0-.4 7.4z";
+  function miniIcon(kind, day) {
+    var sun = day ? '<circle cx="12" cy="12" r="4.6" fill="#f7bd25"/><g stroke="#f7bd25" stroke-width="1.7" stroke-linecap="round">' +
+                    '<path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M5.4 18.6l1.5-1.5M17.1 6.9l1.5-1.5"/></g>'
+                  : '<path d="M15.5 4.2A8 8 0 1 0 19.8 15 6.4 6.4 0 0 1 15.5 4.2z" fill="#f1d77a"/>';
+    var h = '<svg viewBox="0 0 24 24">';
+    if (kind === "sun") return h + sun + "</svg>";
+    if (kind === "part") return h + '<g transform="translate(-3.2 -3.4) scale(0.8)">' + sun + '</g><path d="' + CLOUD_D + '" fill="#f4f3ef" transform="translate(1.2 1.2) scale(0.92)"/></svg>';
+    var dark = kind === "rain" || kind === "storm" || kind === "snow";
+    h += '<path d="' + CLOUD_D + '" fill="' + (dark ? "#c3c6cc" : "#eceae5") + '" transform="translate(-1.9 -5.6) scale(1.15)"/>';   // 구름을 칸에 꽉 차게
+    if (kind === "rain") h += '<g stroke="#5cb2ff" stroke-width="1.8" stroke-linecap="round"><path d="M8.5 18l-1 3M12.5 18l-1 3M16.5 18l-1 3"/></g>';
+    if (kind === "snow") h += '<g fill="#fff"><circle cx="8" cy="19.5" r="1.3"/><circle cx="12" cy="21" r="1.3"/><circle cx="16" cy="19.5" r="1.3"/></g>';
+    if (kind === "storm") h += '<path d="M12.6 15.2l-3 4.6h2.6l-1.4 3.6 4.4-5.2h-2.7l1.6-3z" fill="#f7bd25"/>';
+    if (kind === "fog") h += '<g stroke="#b9bcc2" stroke-width="1.7" stroke-linecap="round"><path d="M5 19h14M7 22h10"/></g>';
+    return h + "</svg>";
+  }
+  // 지금 + 3·6·9·12시간 뒤. 비·눈 확률 30% 이상이면 파란 숫자
+  function drawHours(d) {
+    var box = wq(".hrs"), hrs = d && d.hrs, now = Date.now(), b = -1, i;
+    for (i = 0; hrs && i < hrs.length; i++) if (hrs[i][0] <= now && now < hrs[i][0] + 3600000) { b = i; break; }
+    if (b < 0) { box.style.display = "none"; return; }
+    box.style.display = "";
+    var out = "";
+    for (var k = 0; k < 5; k++) {
+      var e = hrs[b + k * 3];
+      if (!e) break;
+      var code = k ? e[2] : d.code, temp = k ? e[1] : d.temp, day = k ? !!e[4] : d.day, pp = e[3];
+      out += '<div class="hr' + (k ? "" : " now") + '"><div class="tm">' + (k ? new Date(e[0]).getHours() + "시" : "지금") + "</div>" +
+        miniIcon(wmo(code)[1], day) + '<div class="tp">' + rnd(temp) + "°" + (pp >= 30 ? '<span class="pp">' + pp + "%</span>" : "") + "</div></div>";
+    }
+    box.innerHTML = out;
+  }
   function rnd(x) { return Math.round(x) === 0 ? 0 : Math.round(x); }   // -0 방지
   function drawWeather() {
     var city = CITIES[cfg.city % CITIES.length];
@@ -749,7 +791,7 @@
       wq(".hum").innerHTML = DROP + "--";
       drawDust();
       wq(".stat").textContent = wxErr ? "날씨 연결 안 됨" : "날씨 불러오는 중";
-      wxIcon("none", true); return;
+      wxIcon("none", true); drawHours(null); return;
     }
     var w = wmo(d.code);
     var tv = rnd(d.temp);
@@ -761,6 +803,7 @@
     var t = new Date(d.t);
     wq(".stat").textContent = wxErr || stale ? "연결 안 됨 · " + ("0" + t.getHours()).slice(-2) + ":" + ("0" + t.getMinutes()).slice(-2) + " 기준" : "";   // 평소엔 숨김
     wxIcon(w[1], d.day);
+    drawHours(d);
   }
   // ---------- 미세먼지: 환경부 4단계 (PM10 30/80/150, PM2.5 15/35/75). 둘 중 나쁜 쪽으로 얼굴 아이콘 하나 (글자 없이 색·표정만) ----------
   var airdata = null;
@@ -807,14 +850,18 @@
     var city = CITIES[cfg.city % CITIES.length];
     var url = (scheme || "https") + "://api.open-meteo.com/v1/forecast?latitude=" + city[1] + "&longitude=" + city[2] +
       "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,is_day" +
-      "&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1";
+      "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" +
+      "&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=2";
     var x = new XMLHttpRequest();
     x.open("GET", url, true); x.timeout = 15000;
     x.onload = function () {
       try {
         var r = JSON.parse(x.responseText), c = r.current;
         wdata = { city: city[0], t: Date.now(), temp: c.temperature_2m, hum: c.relative_humidity_2m, feel: c.apparent_temperature,
-                  code: c.weather_code, day: !!c.is_day, hi: r.daily.temperature_2m_max[0], lo: r.daily.temperature_2m_min[0] };
+                  code: c.weather_code, day: !!c.is_day, hi: r.daily.temperature_2m_max[0], lo: r.daily.temperature_2m_min[0], hrs: [] };
+        var hh = r.hourly;   // [시각(ms, 그 지역 시간 = 탭 시간), 기온, 날씨 코드, 강수 확률, 낮]
+        for (var j = 0; hh && j < hh.time.length; j++)
+          wdata.hrs.push([new Date(hh.time[j]).getTime(), hh.temperature_2m[j], hh.weather_code[j], hh.precipitation_probability[j], hh.is_day[j]]);
         wxErr = false;
         try { localStorage.setItem("flipclock.wx", JSON.stringify(wdata)); } catch (e) {}
       } catch (e) { wxErr = true; }
