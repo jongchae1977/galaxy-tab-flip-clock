@@ -603,13 +603,14 @@
     return ["", "cloud"];
   }
   // ---------- 위 창 하늘 (아이폰 날씨 앱처럼): 맑은 낮 = 해와 빛살, 밤 = 달과 반짝이는 별(가끔 별똥별), 구름은 천천히 흐르고
-  // 비·눈은 내리고, 뇌우는 번개가 번쩍임. 1번 모드에서 보일 때만 초당 20장 (휴식·숨김·2번 모드면 멈춤: 탭 발열·배터리) ----------
+  // 비·눈은 내리고, 뇌우는 번개가 번쩍임. 1번 모드에서 보일 때만 초당 20장 (휴식·숨김·덮임(skyOff)이면 멈춤: 탭 발열·배터리) ----------
   var SKY = {   // [낮 위, 낮 아래, 밤 위, 밤 아래]
     sun: ["#2f6fc4", "#7fb7ea", "#060d1d", "#18294a"], part: ["#3f75b8", "#86b4dd", "#0a1222", "#1e2b44"],
     cloud: ["#5d6f84", "#94a4b6", "#151b24", "#2a3340"], fog: ["#76808a", "#a5adb4", "#22272d", "#383e45"],
     rain: ["#46566a", "#728396", "#10161e", "#222b37"], snow: ["#7f90a6", "#b8c4d1", "#1a2230", "#323d4d"],
     storm: ["#2a313b", "#4a5462", "#0b0e13", "#1d232c"], none: ["#1d1d1c", "#121211", "#1d1d1c", "#121211"]
   };
+  var skyOff = false;   // 다른 화면이 날씨 창을 덮을 때 true (그동안 그리지 않음)
   var sky = { kind: "none", day: true, w: 0, h: 0, sprites: null, items: null, t0: Date.now(), last: 0, flash: 0, nextFlash: 0, bolt: null, shoot: null, nextShoot: 0 };
   function sprite(w, h, draw) { var c = document.createElement("canvas"); c.width = Math.max(1, w); c.height = Math.max(1, h); draw(c.getContext("2d"), c.width, c.height); return c; }
   function puff(col, w) {   // 흐릿한 구름 한 덩이 (미리 그려 두고 매 장 그대로 붙임)
@@ -665,7 +666,7 @@
   }
   function skyFrame() {
     var now = Date.now();
-    if (isResting || document.hidden || mode === 2) { setTimeout(skyFrame, 500); return; }
+    if (isResting || document.hidden || skyOff) { setTimeout(skyFrame, 500); return; }
     var W2 = Math.round(ww.w * MM * (window.devicePixelRatio || 1)), H2 = Math.round(W.wtop.h * MM * (window.devicePixelRatio || 1));
     if (W2 !== sky.w || H2 !== sky.h) { sky.w = wcv.width = W2; sky.h = wcv.height = H2; sky.items = null; }
     if (!sky.items) skyBuild();
